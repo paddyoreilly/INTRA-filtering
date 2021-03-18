@@ -6,6 +6,7 @@ Created on Tue Mar  9 14:40:42 2021
 """
 
 import numpy as np
+import numpy.ma as ma
 import matplotlib.pyplot as plt
 from matplotlib import dates
 from datetime import datetime, timedelta
@@ -16,7 +17,23 @@ import scipy.interpolate as spinterp
 from tqdm import tqdm
 
 def init(bstfile='C:/Users/paddy/OneDrive/DCU/ilofar/workshop/BST_tutorial/BST_data/modea/20170902_103626_bst_00X.dat', subbands=np.arange(7,495), beamlets=np.arange(0,488)):
-    """Turn a .dat file into a numpy array"""
+    """
+    Turn a .dat file into a Numpy arrays for data, time and frequencys
+
+    Parameters
+    ----------
+    bstfile : .dat file
+        This is the file that will be turned into arrays
+    subbands : List, optional
+        The default is np.arange(7,495).
+    beamlets : List, optional
+        The default is np.arange(0,488).
+
+    Returns
+    -------
+    obs_start :
+
+    """
     
     data = np.fromfile(bstfile)
     print("Number of data points:",data.shape[0])
@@ -123,7 +140,7 @@ def cleaningprocess(data_F,c1=20,c2=2,c3=20,c4=2,int_lim=0.5):
         Ready to be used as as mask for interpolateprocess().
 
     """
-    datacleaned = pick.copy()
+    datacleaned = data_F.copy()
     
     for s in range(len(data_F)):
         diffdata = differential(data_F[s])
@@ -169,3 +186,32 @@ def interpolateprocess(datacleaned):
     #method linear is longer than nearest
     datainterp = spinterp.griddata((x1, y1), newarr.ravel(), (x, y), method='nearest')
     return datainterp
+
+
+def clean_and_interp(data_F,c1=20,c2=2,c3=20,c4=2,int_lim=0.5):
+     """
+    
+
+    Parameters
+    ----------
+    data_F : Numpy array
+        
+    c1 : The absolute limit of derivative, optional
+        The default is 20.
+    c2 : The limit as a multiple of standard dev of derivative, optional
+        The default is 2.
+    c3 : The absolute limit of 2nd derivative, optional
+        DESCRIPTION. The default 20.
+    c4 : The limit as a multiple of standard dev of 2nd derivative, optional
+        The default is 2.
+    int_lim : The upper limit of the intensity, optional
+        DESCRIPTION. The default is 0.5.
+
+    Returns
+    -------
+    datainterp : Numpy Array
+        Cleaned and interpolated data.
+
+    """
+    
+    return interpolateprocess(cleaningprocess(data_F,c1,c2,c3,c4,int_lim))
