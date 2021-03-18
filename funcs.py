@@ -16,7 +16,7 @@ from matplotlib.ticker import MultipleLocator
 import scipy.interpolate as spinterp
 from tqdm import tqdm
 
-def init(bstfile='C:/Users/paddy/OneDrive/DCU/ilofar/workshop/BST_tutorial/BST_data/modea/20170902_103626_bst_00X.dat', subbands=np.arange(7,495), beamlets=np.arange(0,488)):
+def init(bstfile, subbands=np.arange(7,495), beamlets=np.arange(0,488)):
     """
     Turn a .dat file into a Numpy arrays for data, time and frequencys
 
@@ -189,7 +189,7 @@ def interpolateprocess(datacleaned):
 
 
 def clean_and_interp(data_F,c1=20,c2=2,c3=20,c4=2,int_lim=0.5):
-     """
+    """
     
 
     Parameters
