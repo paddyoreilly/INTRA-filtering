@@ -16,9 +16,9 @@ from matplotlib.ticker import MultipleLocator
 import scipy.interpolate as spinterp
 from tqdm import tqdm
 
-def init(bstfile, subbands=np.arange(7,495), beamlets=np.arange(0,488)):
+def start(bstfile, subbands=np.arange(7,495), beamlets=np.arange(0,488)):
     """
-    Turn a .dat file into a Numpy arrays for data, time and frequencys
+    Turn a .dat file into a Numpy arrays for data, time and frequencys.
 
     Parameters
     ----------
@@ -31,7 +31,16 @@ def init(bstfile, subbands=np.arange(7,495), beamlets=np.arange(0,488)):
 
     Returns
     -------
-    obs_start :
+    obs_start : datetime
+        The time when the observation begins.
+    t_arr : Numpy array
+        A 1d array of times converted from datetime.
+    data_F : Numpy array
+        The data array, ready to be plotted or cleaned.
+    sbs : Numpy array
+        A 1d array of subbands used
+    freqs : Numpy array
+        A 1d array of frequencys
 
     """
     
@@ -117,7 +126,8 @@ def differential(dy,dx=1): return np.diff(dy)/dx
 
 def cleaningprocess(data_F,c1=20,c2=2,c3=20,c4=2,int_lim=0.5):
     """
-    
+    Removes the datapoints which are outside of the limits set by the constants.
+    Returns a Numpy array consisting of NaN values where the values were outside the limit.
 
     Parameters
     ----------
@@ -128,11 +138,11 @@ def cleaningprocess(data_F,c1=20,c2=2,c3=20,c4=2,int_lim=0.5):
     c2 : The limit as a multiple of standard dev of derivative, optional
         The default is 2.
     c3 : The absolute limit of 2nd derivative, optional
-        DESCRIPTION. The default 20.
+        The default 20.
     c4 : The limit as a multiple of standard dev of 2nd derivative, optional
         The default is 2.
     int_lim : The upper limit of the intensity, optional
-        DESCRIPTION. The default is 0.5.
+        The default is 0.5.
 
     Returns
     -------
@@ -160,7 +170,8 @@ def cleaningprocess(data_F,c1=20,c2=2,c3=20,c4=2,int_lim=0.5):
 
 def interpolateprocess(datacleaned):
     """
-    
+    Takes a dataset with removed datapoints, and interpolates it into a full image.
+    Returns a full Numpy array.
 
     Parameters
     ----------
@@ -190,7 +201,8 @@ def interpolateprocess(datacleaned):
 
 def clean_and_interp(data_F,c1=20,c2=2,c3=20,c4=2,int_lim=0.5):
     """
-    
+    Removes the datapoints which are outside of the limits set by the constants and interpolates it into a full image.
+    Returns a full Numpy array.
 
     Parameters
     ----------
