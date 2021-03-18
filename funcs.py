@@ -16,7 +16,7 @@ from matplotlib.ticker import MultipleLocator
 import scipy.interpolate as spinterp
 from tqdm import tqdm
 
-def start(bstfile, subbands=np.arange(7,495), beamlets=np.arange(0,488)):
+def start(bstfile, subbands=np.arange(488)):
     """
     Turn a .dat file into a Numpy arrays for data, time and frequencys.
 
@@ -61,7 +61,7 @@ def start(bstfile, subbands=np.arange(7,495), beamlets=np.arange(0,488)):
     #reshape data
     
     print("Data preshape:",data.shape)
-    data = data.reshape(-1,len(beamlets))
+    data = data.reshape(-1,len(subbands))
     print("Data reshape:",data.shape)
     
     #datetime objects
@@ -95,7 +95,7 @@ def start(bstfile, subbands=np.arange(7,495), beamlets=np.arange(0,488)):
     freqs = sb_to_freq(sbs)
     
 
-def sb_to_freq(sb, beamlets=np.arange(0,488)):
+def sb_to_freq(sb=np.arange(488)):
     
     def sb_to_freq_math(x): return ((n-1)+(x/512))*(clock/2)
     
@@ -116,7 +116,7 @@ def sb_to_freq(sb, beamlets=np.arange(0,488)):
     
     freq = np.concatenate((freq_3,freq_5,freq_7),axis=0)
     
-    freq = freq[beamlets[0]:beamlets[-1]+1]
+    freq = freq[sb[0]:sb[-1]+1]
             
     return freq
 
@@ -227,3 +227,59 @@ def clean_and_interp(data_F,c1=20,c2=2,c3=20,c4=2,int_lim=0.5):
     """
     
     return interpolateprocess(cleaningprocess(data_F,c1,c2,c3,c4,int_lim))
+
+def pcolormeshplot(data, y, x, vdata=None, tfs=False, title="", colorbar=False,cmap=None,alpha=None):
+    """
+    Uses pyplot's pcolormesh function to plot data
+
+    Parameters
+    ----------
+    data : Numpy array
+        The Numpy array of the data that will be plotted.
+    y : 1d array or list
+        The y values that will be plotted (freqs).
+    x : 1d array or list
+        The x values that will be plotted (t_arr).
+    vdata : Numpy array
+        Used for vmax and vmin.
+    tfs : True or False, optional
+        If False, just plots 10-90 MHz. The default is False.
+    title : String, optional
+        Title of the plot. The default is "".
+    colorbar : True or False, optional
+        Adds a colorbar. The default is False.
+    cmap : String, optional
+        Change the colormap of the plot. The default is None.
+    alpha : Float, optional
+        Change the opacity of the plot. The default is None.
+
+    Returns
+    -------
+    Plot.
+
+    """
+    if vdata is None:
+        vdata = data
+    g1 = 200
+    g2 = 400
+        
+    plt.pcolormesh(x,y[:g1],data.T[:g1], shading='auto',
+                   vmin=np.percentile(vdata,2), vmax=np.percentile(vdata,98),cmap=cmap,alpha=alpha);
+    if tfs == True:
+        plt.pcolormesh(x,y[g1:g2],data.T[g1:g2], shading='auto',
+                       vmin=np.percentile(vdata,2), vmax=np.percentile(vdata,98),cmap=cmap,alpha=alpha);
+        plt.pcolormesh(x,y[g2:],data.T[g2:], shading='auto',
+                       vmin=np.percentile(vdata,2), vmax=np.percentile(vdata,98),cmap=cmap,alpha=alpha);
+        
+    #plt.gca().invert_yaxis()
+    plt.gca().xaxis_date()
+    plt.gca().xaxis.set_major_formatter(date_format)
+    
+    plt.xlabel("Time")
+    plt.ylabel("Frequency (MHz)")
+    
+    if colorbar == True:
+        plt.colorbar()
+        
+    plt.title(title)
+    #plt.show()
