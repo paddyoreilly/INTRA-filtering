@@ -124,7 +124,7 @@ def sb_to_freq(sb=np.arange(488)):
 def differential(dy,dx=1): return np.diff(dy)/dx
 
 
-def cleaningprocess(data_F,c1=20,c2=2,c3=20,c4=2,int_lim=0.5):
+def cleaningprocess(data_F,c1=20,c2=2,c3=20,c4=2,int_lim=0.01):
     """
     Removes the datapoints which are outside of the limits set by the constants.
     Returns a Numpy array consisting of NaN values where the values were outside the limit.
@@ -199,7 +199,7 @@ def interpolateprocess(datacleaned):
     return datainterp
 
 
-def clean_I(data_F,c1=20,c2=2,c3=20,c4=2,int_lim=0.5):
+def clean_I(data_F,c1=20,c2=2,c3=20,c4=2,int_lim=0.01):
     """
     Removes the datapoints which are outside of the limits set by the constants and interpolates it into a full image.
     Returns a full Numpy array.
@@ -228,7 +228,7 @@ def clean_I(data_F,c1=20,c2=2,c3=20,c4=2,int_lim=0.5):
     
     return interpolateprocess(cleaningprocess(data_F,c1,c2,c3,c4,int_lim))
 
-def pcolormeshplot(data, y, x, vdata=None, tfs=False, title="", colorbar=False,cmap=None,alpha=None,figsize=None):
+def pcolormeshplot(data, y, x, vdata=None, tfs=True, title="", colorbar=False,cmap=None,alpha=None,figsize=None):
     """
     Uses pyplot's pcolormesh function to plot data
 
@@ -293,7 +293,7 @@ def pcolormeshplot(data, y, x, vdata=None, tfs=False, title="", colorbar=False,c
     #plt.show()
     
     
-def badchannelfinder(data,cut=0.75,upper_lim=20,lower_lim=0.5, histreturn=False, plot=False):
+def badchannelfinder(data,cut=0.75,upper_lim=20,lower_lim=0.01, histreturn=False, plot=False):
     """
     Seeks out bad channels.
     First defines a 'normal' limit. Any channel outside this limit for longer than the cutoff time is placed inside a list.
@@ -401,7 +401,7 @@ def badchannelremover(data,cut=0.75,upper_lim=20,lower_lim=0.5,bad=None):
     return data_n
 
 
-def completeclean(data,cut=0.75,upper_lim=20,lower_lim=0.5,c1=20,c2=2,c3=20,c4=2,int_lim=0.5, bad=None, interpolate=True):
+def completeclean(data,cut=0.75,upper_lim=20,lower_lim=0.5,c1=20,c2=2,c3=20,c4=2,int_lim=0.01, bad=None, interpolate=True):
     """
     Runs the complete cleaning process, including removal of bad subbands.
 
