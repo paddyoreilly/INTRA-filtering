@@ -124,7 +124,7 @@ def sb_to_freq(sb=np.arange(488)):
 def differential(dy,dx=1): return np.diff(dy)/dx
 
 
-def cleaningprocess(data_F,c1=20,c2=2,c3=20,c4=2,int_lim=0.01):
+def cleaningprocess(data_F,c1=20,c2=2,c3=20,c4=2,int_lim=0):
     """
     Removes the datapoints which are outside of the limits set by the constants.
     Returns a Numpy array consisting of NaN values where the values were outside the limit.
@@ -142,7 +142,7 @@ def cleaningprocess(data_F,c1=20,c2=2,c3=20,c4=2,int_lim=0.01):
     c4 : The limit as a multiple of standard dev of 2nd derivative, optional
         The default is 2.
     int_lim : The upper limit of the intensity, optional
-        The default is 0.5.
+        The default is 0.
 
     Returns
     -------
@@ -199,7 +199,7 @@ def interpolateprocess(datacleaned):
     return datainterp
 
 
-def clean_I(data_F,c1=20,c2=2,c3=20,c4=2,int_lim=0.01):
+def clean_I(data_F,c1=20,c2=2,c3=20,c4=2,int_lim=0):
     """
     Removes the datapoints which are outside of the limits set by the constants and interpolates it into a full image.
     Returns a full Numpy array.
@@ -217,7 +217,7 @@ def clean_I(data_F,c1=20,c2=2,c3=20,c4=2,int_lim=0.01):
     c4 : The limit as a multiple of standard dev of 2nd derivative, optional
         The default is 2.
     int_lim : The upper limit of the intensity, optional
-        DESCRIPTION. The default is 0.5.
+        DESCRIPTION. The default is 0.
 
     Returns
     -------
@@ -279,7 +279,6 @@ def pcolormeshplot(data, y, x, vdata=None, tfs=True, title="", colorbar=False,cm
         plt.pcolormesh(x,y[g2:],data.T[g2:], shading='auto',
                        vmin=np.percentile(vdata,2), vmax=np.percentile(vdata,98),cmap=cmap,alpha=alpha);
         
-    #plt.gca().invert_yaxis()
     plt.gca().xaxis_date()
     plt.gca().xaxis.set_major_formatter(date_format)
     
@@ -290,10 +289,9 @@ def pcolormeshplot(data, y, x, vdata=None, tfs=True, title="", colorbar=False,cm
         plt.colorbar()
         
     plt.title(title)
-    #plt.show()
     
     
-def badchannelfinder(data,cut=0.75,upper_lim=20,lower_lim=0.01, histreturn=False, plot=False):
+def badchannelfinder(data,cut=0.75,upper_lim=20,lower_lim=0.5, histreturn=False, plot=False):
     """
     Seeks out bad channels.
     First defines a 'normal' limit. Any channel outside this limit for longer than the cutoff time is placed inside a list.
@@ -401,7 +399,7 @@ def badchannelremover(data,cut=0.75,upper_lim=20,lower_lim=0.5,bad=None):
     return data_n
 
 
-def completeclean(data,cut=0.75,upper_lim=20,lower_lim=0.5,c1=20,c2=2,c3=20,c4=2,int_lim=0.01, bad=None, interpolate=True):
+def completeclean(data,cut=0.75,upper_lim=20,lower_lim=0.5,c1=20,c2=2,c3=20,c4=2,int_lim=0, bad=None, interpolate=True, savepath=None):
     """
     Runs the complete cleaning process, including removal of bad subbands.
 
@@ -424,12 +422,14 @@ def completeclean(data,cut=0.75,upper_lim=20,lower_lim=0.5,c1=20,c2=2,c3=20,c4=2
     c4 : The limit as a multiple of standard dev of 2nd derivative, optional
         The default is 2.
     int_lim : The upper limit of the intensity, optional
-        DESCRIPTION. The default is 0.5.
+        The default is 0.
     bad : If you want to define the bad bands yourself, optional
         The default is None.
     interpolate : If you want the end result interpolated, optional
         The default is True.
-
+    savepath : Saves the clean data to a .npy file, optional
+        The default is None.
+        
     Returns
     -------
     Numpy array
@@ -437,12 +437,61 @@ def completeclean(data,cut=0.75,upper_lim=20,lower_lim=0.5,c1=20,c2=2,c3=20,c4=2
 
     """
     if bad is None:
-        bad = badchannelfinder(data,cut,upper_lim,lower_lim) 
+        bad = badchannelfinder(data,cut,upper_lim,lower_lim)
+        
     data_n = badchannelremover(cleaningprocess(data,c1,c2,c3,c4,int_lim),bad=bad)
     
     if interpolate == True:
-        return interpolateprocess(data_n)
+        data_n = interpolateprocess(data_n)
+
+    if savepath == None:
+        pass
     else:
-        return data_n
+        np.save(savepath,data_n)
+        
+    return data_n
 
 
+def starttoclean(bstfile, savepath=None, plot=False, cut=0.75,upper_lim=20,lower_lim=0.5,c1=20,c2=2,c3=20,c4=2,int_lim=0.5):
+    """
+    Runs the complete cleaning process from the .dat file. 
+    Specify a savepath in order to save as a .npy file 
+    Set plot to True to plot the end result
+
+    Parameters
+    ----------
+    bstfile : .dat file
+        This is the file that will be turned into arrays
+    savepath : Saves the clean data to a .npy file, optional
+        The default is None.
+    plot : Bool, optional
+        Plot the end result or not. The default is False.
+    cut : The cutoff point as a multiple of the time for bad bands, optional
+        ie. If a band is outside the limit for 0.75 of the time it is considered bad. The default is 0.75.
+    upper_lim : Upper limit for bad bands, optional
+        The default is 20.
+    lower_lim : Lower limit for bad bands, optional
+        The default is 0.5.
+    c1 : The absolute limit of derivative, optional
+        The default is 20.
+    c2 : The limit as a multiple of standard dev of derivative, optional
+        The default is 2.
+    c3 : The absolute limit of 2nd derivative, optional
+         The default 20.
+    c4 : The limit as a multiple of standard dev of 2nd derivative, optional
+        The default is 2.
+    int_lim : The upper limit of the intensity, optional
+        The default is 0.5.
+
+    Returns
+    -------
+    Numpy array
+        Clean array with bad bands removed.
+
+    """
+    start(bstfile)
+    data_I = completeclean(data_F,cut,upper_lim,lower_lim,c1,c2,c3,c4,int_lim, savepath=savepath)
+    if plot == True:
+        pcolormeshplot(data_I, freqs, t_arr, tfs=True, title=obs_start.strftime("%a %d %B %y (%Y%m%d_%H%M%S)\n"), colorbar=True,cmap='Greys_r',figsize=(15,10))
+        
+    return data_I
