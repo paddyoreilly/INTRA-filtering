@@ -483,7 +483,9 @@ if __name__ == '__main__':
     savepath = input("Output file (.npy):\n")
     
     if plotC == True:
-        interpolateprocess(data_F,savepath=savepath)
+        data_I = interpolateprocess(data_F,savepath=savepath)
+        if plotI = True:
+            pcolormeshplot(data_I,freqs,t_arr,title="Filtered",figsize=(6,4))
     else:
         print("May take a while")
         completeclean(data_F,cut,upper_lim,lower_lim,c1,c2,c3,c4,int_lim, interpolate=True, savepath=savepath, plot=plotI)
