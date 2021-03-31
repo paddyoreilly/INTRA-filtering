@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Mar  9 14:40:42 2021
+Created on Wed Mar 31 11:19:04 2021
 
 @author: paddy
 """
@@ -14,7 +14,6 @@ import os
 import statistics as st
 from matplotlib.ticker import MultipleLocator
 import scipy.interpolate as spinterp
-from tqdm import tqdm
 
 def start(bstfile, subbands=np.arange(488)):
     """
@@ -120,9 +119,69 @@ def sb_to_freq(sb=np.arange(488)):
             
     return freq
 
+def pcolormeshplot(data, y, x, vdata=None, tfs=True, title="", colorbar=False,cmap=None,alpha=None,figsize=None):
+    """
+    Uses pyplot's pcolormesh function to plot data
+
+    Parameters
+    ----------
+    data : Numpy array
+        The Numpy array of the data that will be plotted.
+    y : 1d array or list
+        The y values that will be plotted (freqs).
+    x : 1d array or list
+        The x values that will be plotted (t_arr).
+    vdata : Numpy array
+        Used for vmax and vmin.
+    tfs : Bool, optional
+        If False, just plots 10-90 MHz. The default is False.
+    title : String, optional
+        Title of the plot. The default is "".
+    colorbar : Bool, optional
+        Adds a colorbar. The default is False.
+    cmap : String, optional
+        Change the colormap of the plot. The default is None.
+    alpha : Float, optional
+        Change the opacity of the plot. The default is None.
+    figsize : Tuple, optional
+        Sets the size of the plot in inches (400dpi). The default is None.
+
+
+    Returns
+    -------
+    Plot.
+
+    """
+    if vdata is None:
+        vdata = data
+    g1 = 200
+    g2 = 400
+        
+    if figsize is None:
+        pass
+    else:
+        fig, ax = plt.subplots(figsize=figsize, dpi=100)
+    
+    plt.pcolormesh(x,y[:g1],data.T[:g1], shading='auto',
+                   vmin=np.percentile(vdata,2), vmax=np.percentile(vdata,98),cmap=cmap,alpha=alpha);
+    if tfs == True:
+        plt.pcolormesh(x,y[g1:g2],data.T[g1:g2], shading='auto',
+                       vmin=np.percentile(vdata,2), vmax=np.percentile(vdata,98),cmap=cmap,alpha=alpha);
+        plt.pcolormesh(x,y[g2:],data.T[g2:], shading='auto',
+                       vmin=np.percentile(vdata,2), vmax=np.percentile(vdata,98),cmap=cmap,alpha=alpha);
+        
+    plt.gca().xaxis_date()
+    plt.gca().xaxis.set_major_formatter(date_format)
+    
+    plt.xlabel("Time")
+    plt.ylabel("Frequency (MHz)")
+    
+    if colorbar == True:
+        plt.colorbar()
+        
+    plt.title(title)
 
 def differential(dy,dx=1): return np.diff(dy)/dx
-
 
 def cleaningprocess(data_F,c1=20,c2=2,c3=20,c4=2,int_lim=0):
     """
@@ -168,7 +227,7 @@ def cleaningprocess(data_F,c1=20,c2=2,c3=20,c4=2,int_lim=0):
     return datacleaned
 
 
-def interpolateprocess(datacleaned):
+def interpolateprocess(datacleaned,savepath=None):
     """
     Takes a dataset with removed datapoints, and interpolates it into a full image.
     Returns a full Numpy array.
@@ -196,101 +255,15 @@ def interpolateprocess(datacleaned):
 
     #method linear is longer than nearest
     datainterp = spinterp.griddata((x1, y1), newarr.ravel(), (x, y), method='nearest')
-    return datainterp
-
-
-def clean_I(data_F,c1=20,c2=2,c3=20,c4=2,int_lim=0):
-    """
-    Removes the datapoints which are outside of the limits set by the constants and interpolates it into a full image.
-    Returns a full Numpy array.
-
-    Parameters
-    ----------
-    data_F : Numpy array
-        
-    c1 : The absolute limit of derivative, optional
-        The default is 20.
-    c2 : The limit as a multiple of standard dev of derivative, optional
-        The default is 2.
-    c3 : The absolute limit of 2nd derivative, optional
-         The default 20.
-    c4 : The limit as a multiple of standard dev of 2nd derivative, optional
-        The default is 2.
-    int_lim : The upper limit of the intensity, optional
-        DESCRIPTION. The default is 0.
-
-    Returns
-    -------
-    datainterp : Numpy Array
-        Cleaned and interpolated data.
-
-    """
     
-    return interpolateprocess(cleaningprocess(data_F,c1,c2,c3,c4,int_lim))
-
-def pcolormeshplot(data, y, x, vdata=None, tfs=True, title="", colorbar=False,cmap=None,alpha=None,figsize=None):
-    """
-    Uses pyplot's pcolormesh function to plot data
-
-    Parameters
-    ----------
-    data : Numpy array
-        The Numpy array of the data that will be plotted.
-    y : 1d array or list
-        The y values that will be plotted (freqs).
-    x : 1d array or list
-        The x values that will be plotted (t_arr).
-    vdata : Numpy array
-        Used for vmax and vmin.
-    tfs : Bool, optional
-        If False, just plots 10-90 MHz. The default is False.
-    title : String, optional
-        Title of the plot. The default is "".
-    colorbar : Bool, optional
-        Adds a colorbar. The default is False.
-    cmap : String, optional
-        Change the colormap of the plot. The default is None.
-    alpha : Float, optional
-        Change the opacity of the plot. The default is None.
-    figsize : Tuple, optional
-        Sets the size of the plot in inches (400dpi). The default is None.
-
-
-    Returns
-    -------
-    Plot.
-
-    """
-    if vdata is None:
-        vdata = data
-    g1 = 200
-    g2 = 400
-        
-    if figsize is None:
+    #save
+    if savepath == None:
         pass
     else:
-        fig, ax = plt.subplots(figsize=figsize, dpi=400)
+        np.save(savepath,datainterp)
     
-    plt.pcolormesh(x,y[:g1],data.T[:g1], shading='auto',
-                   vmin=np.percentile(vdata,2), vmax=np.percentile(vdata,98),cmap=cmap,alpha=alpha);
-    if tfs == True:
-        plt.pcolormesh(x,y[g1:g2],data.T[g1:g2], shading='auto',
-                       vmin=np.percentile(vdata,2), vmax=np.percentile(vdata,98),cmap=cmap,alpha=alpha);
-        plt.pcolormesh(x,y[g2:],data.T[g2:], shading='auto',
-                       vmin=np.percentile(vdata,2), vmax=np.percentile(vdata,98),cmap=cmap,alpha=alpha);
-        
-    plt.gca().xaxis_date()
-    plt.gca().xaxis.set_major_formatter(date_format)
-    
-    plt.xlabel("Time")
-    plt.ylabel("Frequency (MHz)")
-    
-    if colorbar == True:
-        plt.colorbar()
-        
-    plt.title(title)
-    
-    
+    return datainterp
+
 def badchannelfinder(data,cut=0.75,upper_lim=20,lower_lim=0.5, histreturn=False, plot=False):
     """
     Seeks out bad channels.
@@ -334,7 +307,7 @@ def badchannelfinder(data,cut=0.75,upper_lim=20,lower_lim=0.5, histreturn=False,
             bad.append(i)
     
     if plot == True:
-        fig, ax = plt.subplots(figsize=(15,10), dpi=400)
+        fig, ax = plt.subplots(figsize=(15,10), dpi=100)
         
         plt.subplot2grid(shape=(1,4),loc=(0,0),colspan=3)
         pcolormeshplot(data,freqs,t_arr,tfs=True,title="Bad channels are outside limit for "+str(round(cut*100))+"% of the whole observation")
@@ -362,7 +335,6 @@ def badchannelfinder(data,cut=0.75,upper_lim=20,lower_lim=0.5, histreturn=False,
         plt.show()
     
     return bad
-
 
 def badchannelremover(data,cut=0.75,upper_lim=20,lower_lim=0.5,bad=None):
     """
@@ -399,7 +371,7 @@ def badchannelremover(data,cut=0.75,upper_lim=20,lower_lim=0.5,bad=None):
     return data_n
 
 
-def completeclean(data,cut=0.75,upper_lim=20,lower_lim=0.5,c1=20,c2=2,c3=20,c4=2,int_lim=0, bad=None, interpolate=True, savepath=None):
+def completeclean(data,cut=0.75,upper_lim=20,lower_lim=0.5,c1=20,c2=2,c3=20,c4=2,int_lim=0.5, bad=None, interpolate=True, savepath=None, plot=False):
     """
     Runs the complete cleaning process, including removal of bad subbands.
 
@@ -449,49 +421,72 @@ def completeclean(data,cut=0.75,upper_lim=20,lower_lim=0.5,c1=20,c2=2,c3=20,c4=2
     else:
         np.save(savepath,data_n)
         
+    if plot == True:
+        if interpolate == True:
+            vdata = None
+            title = 'Filtered'
+            cmap = 'Greys_r'
+        else:
+            vdata = data_F
+            title = 'Mask'
+            cmap = 'autumn'
+            
+        pcolormeshplot(data_n, freqs, t_arr, vdata=vdata, tfs=True, title=obs_start.strftime("%a %d %B %y (%Y%m%d_%H%M%S)\n")+' '+title, colorbar=True,cmap=cmap,figsize=(6,4))
+        plt.show()
+        
     return data_n
 
 
-def starttoclean(bstfile, savepath=None, plot=False, cut=0.75,upper_lim=20,lower_lim=0.5,c1=20,c2=2,c3=20,c4=2,int_lim=0.5):
-    """
-    Runs the complete cleaning process from the .dat file. 
-    Specify a savepath in order to save as a .npy file 
-    Set plot to True to plot the end result
 
-    Parameters
-    ----------
-    bstfile : .dat file
-        This is the file that will be turned into arrays
-    savepath : Saves the clean data to a .npy file, optional
-        The default is None.
-    plot : Bool, optional
-        Plot the end result or not. The default is False.
-    cut : The cutoff point as a multiple of the time for bad bands, optional
-        ie. If a band is outside the limit for 0.75 of the time it is considered bad. The default is 0.75.
-    upper_lim : Upper limit for bad bands, optional
-        The default is 20.
-    lower_lim : Lower limit for bad bands, optional
-        The default is 0.5.
-    c1 : The absolute limit of derivative, optional
-        The default is 20.
-    c2 : The limit as a multiple of standard dev of derivative, optional
-        The default is 2.
-    c3 : The absolute limit of 2nd derivative, optional
-         The default 20.
-    c4 : The limit as a multiple of standard dev of 2nd derivative, optional
-        The default is 2.
-    int_lim : The upper limit of the intensity, optional
-        The default is 0.5.
-
-    Returns
-    -------
-    Numpy array
-        Clean array with bad bands removed.
-
-    """
-    start(bstfile)
-    data_I = completeclean(data_F,cut,upper_lim,lower_lim,c1,c2,c3,c4,int_lim, savepath=savepath)
-    if plot == True:
-        pcolormeshplot(data_I, freqs, t_arr, tfs=True, title=obs_start.strftime("%a %d %B %y (%Y%m%d_%H%M%S)\n"), colorbar=True,cmap='Greys_r',figsize=(15,10))
+if __name__ == '__main__':
+    
+    start(input("Input file (.dat):\n"))
+    print("\n============================================\n")
+    
+    if input("Define constants? (y/n)\nIf no defaults will be used\n") == 'y':
         
-    return data_I
+        print("\nBand cleaning constants\n============================================\n")
+        upper_lim = float(input("Input the upper intensity limit for bad bands\n20 is the default\n"))
+        lower_lim = float(input("Input the lower intensity limit for bad bands\n0.5 is the default\n"))
+        cut = float(input("Input the cutoff for bad bands (If the band is outside the limit for x of the entire observation, it is bad)\n0.75 is the default\n"))
+        
+        print("\nDifferential filter constants\n============================================\n")
+        c1 = float(input("Input the fixed limit for the first differential\n20 is the default\n"))
+        c2 = float(input("Input the variable limit for the first differential (multiple of each times standard deviation)\n2 is the default\n"))
+        c3 = float(input("Input the fixed limit for the second differential\n20 is the default\n"))
+        c4 = float(input("Input the variable limit for the second differential (multiple of each times standard deviation)\n2 is the default\n"))
+        int_lim = float(input("Input the lower intensity limit\n0.5 is the default\n"))
+        
+        
+    else:
+        cut=0.75;upper_lim=20;lower_lim=0.5;c1=20;c2=2;c3=20;c4=2;int_lim=0.5
+        
+    print("\n============================================\n")
+    if input('Plot any results? (y/n):\n') == 'y':
+        if input("Plot the unfiltered data? (y/n):\n") == "y":
+            pcolormeshplot(data_F,freqs,t_arr,title="Unfiltered",figsize=(6,4))
+            plt.show()
+            
+        if input("Plot the masked data? (y/n):\nShows what gets deleted in white\n") == "y":
+            plotC = True
+            print("May take a while")
+            data_C = completeclean(data_F,cut,upper_lim,lower_lim,c1,c2,c3,c4,int_lim, interpolate=False, plot=True)
+            plt.show()
+        else:
+            plotC = False
+            
+        if input("Plot the Interpolated data? (y/n):\n") == "y":
+            plotI = True
+        else:
+            plotI = False
+            
+    savepath = input("Output file (.npy):\n")
+    
+    if plotC == True:
+        interpolateprocess(data_F,savepath=savepath)
+    else:
+        print("May take a while")
+        completeclean(data_F,cut,upper_lim,lower_lim,c1,c2,c3,c4,int_lim, interpolate=True, savepath=savepath, plot=plotI)
+        plt.show()
+    
+    
