@@ -1,5 +1,8 @@
 # INTRA-project
 
+The funcs.py file contains all the functions I've used.
+The executable.py file can be run from a terminal, it allows different constants and different plots straight from the terminal.
+
 All the functions have some explanation, hopefully it all makes sense. 
 The cleaningprocess function will return an array consisting of NaN values. When plotted using pcolormesh, you can see exactly what is deleted on the image. 
 
