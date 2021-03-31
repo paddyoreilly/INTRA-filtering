@@ -497,6 +497,6 @@ def starttoclean(bstfile, savepath=None, plot=False, cut=0.75,upper_lim=20,lower
     return data_I
         
 if __name__ == '__main__':
-    i = input("Input file:\n")
-    o = input("Output file:\n")
+    i = str(input("Input file:\n"))
+    o = str(input("Output file:\n"))
     starttoclean(i, o)
